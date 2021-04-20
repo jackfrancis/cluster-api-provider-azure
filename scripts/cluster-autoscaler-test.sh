@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CLUSTER_PREFIX="${CLUSTER_PREFIX:-capz-ca}"
+CLUSTER_PREFIX="${CLUSTER_PREFIX:capz-ca}"
 SSH_PUB_KEY_PATH="${SSH_PUB_KEY_PATH:-${HOME}/.ssh/id_rsa.pub}"
 export CLUSTER_NAME=$CLUSTER_PREFIX-$(uuidgen | cut -c1-5 | awk '{print tolower($0)}')
 export AZURE_LOCATION="${AZURE_LOCATION:-westus2}"
