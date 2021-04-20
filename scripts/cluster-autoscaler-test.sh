@@ -45,8 +45,8 @@ while true; do
     sleep 5
 done
 echo cluster is ready
-echo creating kubeconfig in kube-system namespace for cluster $CLUSTER_NAME
-k create secret generic $CLUSTER_NAME-kubeconfig --from-file=$HOME/.kube/$CLUSTER_NAME.kubeconfig -n kube-system
+echo creating kubeconfig in $AUTOSCALER_NS namespace for cluster $CLUSTER_NAME
+k create secret generic $CLUSTER_NAME-kubeconfig --from-file=$HOME/.kube/$CLUSTER_NAME.kubeconfig -n $AUTOSCALER_NS
 k annotate machinedeployment $CLUSTER_NAME-md-0 cluster.x-k8s.io/cluster-api-autoscaler-node-group-min-size=1
 k annotate machinedeployment $CLUSTER_NAME-md-0 cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size=20
 curl -s $CLUSTER_AUTOSCALER_YAML_SPEC | envsubst | k apply -f -
