@@ -13,7 +13,7 @@ export WORKER_MACHINE_COUNT="${WORKER_MACHINE_COUNT:-3}"
 export AUTOSCALER_NS="${AUTOSCALER_NS:-kube-system}"
 export CAPI_NS="${CAPI_NS:-default}"
 export AUTOSCALER_IMAGE="${AUTOSCALER_IMAGE:-us.gcr.io/k8s-artifacts-prod/autoscaling/cluster-autoscaler:v1.20.0}"
-export CLUSTER_AUTOSCALER_YAML_SPEC="${CLUSTER_AUTOSCALER_YAML_SPEC:-https://gist.githubusercontent.com/jackfrancis/b9b3092ed1add1d35a6b54c8215a5054/raw/1c7f3b55cbc0aa197f76f615ac3095b404ec609c/cluster-autoscaler.yaml}"
+export CLUSTER_AUTOSCALER_YAML_SPEC="${CLUSTER_AUTOSCALER_YAML_SPEC:-https://gist.githubusercontent.com/jackfrancis/b9b3092ed1add1d35a6b54c8215a5054/raw/a0c5d74d46c5b4956833c5169083a115d12418b1/cluster-autoscaler.yaml}"
 
 if [ -z "$AZURE_SUBSCRIPTION_ID" ]; then
     echo "must provide a AZURE_SUBSCRIPTION_ID env var"
