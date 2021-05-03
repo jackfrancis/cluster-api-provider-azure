@@ -106,7 +106,7 @@ var _ = Describe("Conformance Tests", func() {
 
 		workerMachineCount, err := strconv.ParseInt(e2eConfig.GetVariable("CONFORMANCE_WORKER_MACHINE_COUNT"), 10, 64)
 		Expect(err).NotTo(HaveOccurred())
-		controlPlaneMachineCount := 7 // Temporarily testing larger HA control plane clusters
+		controlPlaneMachineCount, err := strconv.ParseInt("7", 10, 64)
 		Expect(err).NotTo(HaveOccurred())
 
 		runtime := b.Time("cluster creation", func() {
