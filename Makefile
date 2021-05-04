@@ -128,7 +128,7 @@ GINKGO_ARGS ?=
 ARTIFACTS ?= $(ROOT_DIR)/_artifacts
 E2E_CONF_FILE ?= $(ROOT_DIR)/test/e2e/config/azure-dev.yaml
 E2E_CONF_FILE_ENVSUBST := $(ROOT_DIR)/test/e2e/config/azure-dev-envsubst.yaml
-SKIP_CLEANUP ?= false
+SKIP_CLEANUP ?= true
 SKIP_CREATE_MGMT_CLUSTER ?= false
 WIN_REPO_LIST ?= https://raw.githubusercontent.com/kubernetes-sigs/windows-testing/master/images/image-repo-list
 
