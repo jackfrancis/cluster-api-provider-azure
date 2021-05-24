@@ -78,5 +78,6 @@ done
 while true; do
     k delete cluster $CLUSTER_NAME --wait=false && break || sleep 5
 done
+echo "Deleted cluster ${CLUSTER_NAME}"
 rm -f $HOME/.kube/$CLUSTER_NAME.kubeconfig
 exit 0
