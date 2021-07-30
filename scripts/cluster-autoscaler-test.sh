@@ -11,6 +11,9 @@ export AZURE_CONTROL_PLANE_MACHINE_TYPE="${AZURE_CONTROL_PLANE_MACHINE_TYPE:-Sta
 export AZURE_NODE_MACHINE_TYPE="${AZURE_NODE_MACHINE_TYPE:-Standard_D2s_v3}"
 export WORKER_MACHINE_COUNT="${WORKER_MACHINE_COUNT:-3}"
 export CAPI_NS="${CAPI_NS:-default}"
+export CLUSTER_IDENTITY_NAME="cluster-identity"
+export AZURE_CLUSTER_IDENTITY_SECRET_NAME="cluster-identity-secret"
+export AZURE_CLUSTER_IDENTITY_SECRET_NAMESPACE="default"
 export AUTOSCALER_IMAGE="${AUTOSCALER_IMAGE:-us.gcr.io/k8s-artifacts-prod/autoscaling/cluster-autoscaler:v1.20.0}"
 export CLUSTER_AUTOSCALER_YAML_SPEC="${CLUSTER_AUTOSCALER_YAML_SPEC:-https://gist.githubusercontent.com/jackfrancis/b9b3092ed1add1d35a6b54c8215a5054/raw/56f9064031d03d6fd3a6c8126a95a950040e8b2b/cluster-autoscaler.yaml}"
 export NUM_WORKLOAD_CLUSTERS="${NUM_WORKLOAD_CLUSTERS:-1}"
@@ -19,6 +22,9 @@ if [ -z "$AZURE_SUBSCRIPTION_ID" ]; then
     echo "must provide a AZURE_SUBSCRIPTION_ID env var"
     exit 1;
 fi
+
+k create secret generic "${AZURE_CLUSTER_IDENTITY_SECRET_NAME}" --from-literal=clientSecret=client-"${CLUSTER_IDENTITY_NAME}"
+k label secret "${AZURE_CLUSTER_IDENTITY_SECRET_NAME}" "clusterctl.cluster.x-k8s.io/move-hierarchy=true" --overwrite=true
 
 TOTAL_NODES=$((CONTROL_PLANE_MACHINE_COUNT+WORKER_MACHINE_COUNT))
 
