@@ -16,7 +16,7 @@ export CLUSTER_IDENTITY_NAME="cluster-identity"
 export AZURE_CLUSTER_IDENTITY_SECRET_NAME="cluster-identity-secret"
 export AZURE_CLUSTER_IDENTITY_SECRET_NAMESPACE="default"
 export AUTOSCALER_IMAGE="${AUTOSCALER_IMAGE:-us.gcr.io/k8s-artifacts-prod/autoscaling/cluster-autoscaler:v1.22.0}"
-export CLUSTER_AUTOSCALER_YAML_SPEC="${CLUSTER_AUTOSCALER_YAML_SPEC:-https://gist.githubusercontent.com/jackfrancis/b9b3092ed1add1d35a6b54c8215a5054/raw/f6d187c3034e4a4af13aedd06a2b027def74d5f5/cluster-autoscaler.yaml}"
+export CLUSTER_AUTOSCALER_YAML_SPEC="${CLUSTER_AUTOSCALER_YAML_SPEC:-https://gist.githubusercontent.com/jackfrancis/b9b3092ed1add1d35a6b54c8215a5054/raw/ee4dd463acbc80afeb4480d9257365e0c757e5b3/cluster-autoscaler.yaml}"
 export NUM_WORKLOAD_CLUSTERS="${NUM_WORKLOAD_CLUSTERS:-1}"
 export DESIRED_NEW_NODES="${DESIRED_NEW_NODES:-10}"
 
@@ -37,7 +37,36 @@ if [ -z "$AZURE_SUBSCRIPTION_ID" ]; then
     exit 1;
 fi
 
-k create secret generic "${AZURE_CLUSTER_IDENTITY_SECRET_NAME}" --from-literal=clientSecret=client-"${CLUSTER_IDENTITY_NAME}"
+while true; do
+    k get nodes && break || sleep 5
+done
+MGMT_CLUSTER_ONLINE=""
+for ((i=1; i<=3; i++)); do
+    if k get nodes; then
+        MGMT_CLUSTER_ONLINE="true"
+        break
+    else
+        sleep 5
+    fi
+done
+if [ "$MGMT_CLUSTER_ONLINE" = "true" ]; then
+    NEEDS_CLUSTER_CTL_INIT=""
+    for ((i=1; i<=3; i++)); do
+        if k get namespace capz-system; then
+            NEEDS_CLUSTER_CTL_INIT="false"
+            break
+        else
+            sleep 5
+        fi
+    done
+    if ! [ "$NEEDS_CLUSTER_CTL_INIT" = "false" ]; then
+        k create secret generic "${AZURE_CLUSTER_IDENTITY_SECRET_NAME}" --from-literal=clientSecret=client-"${AZURE_CLIENT_SECRET}"
+        clusterctl init --infrastructure azure
+    fi
+else
+    exit 1
+fi
+
 k label secret "${AZURE_CLUSTER_IDENTITY_SECRET_NAME}" "clusterctl.cluster.x-k8s.io/move-hierarchy=true" --overwrite=true
 
 TOTAL_NODES=$((CONTROL_PLANE_MACHINE_COUNT+WORKER_MACHINE_COUNT))
@@ -62,6 +91,7 @@ do
         fi
         sleep 5
     done
+    k --kubeconfig=$HOME/.kube/$CLUSTER_NAME.kubeconfig apply -f https://raw.githubusercontent.com/kubernetes-sigs/cluster-api-provider-azure/main/templates/addons/calico.yaml
     echo "Waiting to observe ${TOTAL_NODES} nodes as Ready"
     while true; do
         if [[ $(k --kubeconfig=$HOME/.kube/$CLUSTER_NAME.kubeconfig get nodes | grep '\<Ready' | wc -l | awk '{$1=$1};1') == "${TOTAL_NODES}" ]]; then
@@ -103,7 +133,7 @@ done
 for ((i=1; i<=NUM_WORKLOAD_CLUSTERS; i++)); do
     echo "Waiting for HPA to create $MIN_COUNT php-apache pods"
     while true; do
-        if [[ $(k --kubeconfig=$HOME/.kube/$CLUSTER_NAME.kubeconfig get pods | grep 'php-apache' | wc -l | awk '{$1=$1};1') -eq "${MIN_COUNT}" ]]; then
+        if [[ $(k --kubeconfig=$HOME/.kube/$CLUSTER_NAME.kubeconfig get pods | grep 'php-apache' | wc -l | awk '{$1=$1};1') -ge "${MIN_COUNT}" ]]; then
             break
         fi
         sleep 30
@@ -118,7 +148,7 @@ for ((i=1; i<=NUM_WORKLOAD_CLUSTERS; i++)); do
         #if [[ $(k --kubeconfig=$HOME/.kube/$CLUSTER_NAME.kubeconfig get pods -A -o json | jq '[.items[] | select(.status.phase == "Pending")] | length') -eq "0" ]]; then
             break
         fi
-        sleep 30
+        sleep 60
     done
     CLUSTER_SCALED_OUT_TIME=$(( SECONDS - CLUSTER_CREATE_START_TIME ))
     echo "No more Pending pods, took $CLUSTER_SCALED_OUT_TIME seconds to schedule all Pending pods!"
@@ -153,7 +183,7 @@ for ((i=1; i<=NUM_WORKLOAD_CLUSTERS; i++)); do
     echo "Deleted cluster ${CLUSTER_NAME}"
     echo "Deleting cluster-autoscaler resources"
     while true; do
-        curl -s $CLUSTER_AUTOSCALER_YAML_SPEC | envsubst | k apply -f - && break || sleep 5
+        curl -s $CLUSTER_AUTOSCALER_YAML_SPEC | envsubst | k delete -f - && break || sleep 5
     done
     echo "Deleted cluster-autoscaler resources"
     rm -f $HOME/.kube/$CLUSTER_NAME.kubeconfig
