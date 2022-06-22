@@ -96,6 +96,9 @@ func (src *AzureMachinePool) ConvertTo(dstRaw conversion.Hub) error {
 		dst.Spec.Template.SpotVMOptions.EvictionPolicy = restored.Spec.Template.SpotVMOptions.EvictionPolicy
 	}
 
+	// Restore list of virtual network peerings
+	dst.Spec.OrchestrationMode = restored.Spec.OrchestrationMode
+
 	return nil
 }
 

@@ -20,6 +20,7 @@ import (
 	unsafe "unsafe"
 
 	"k8s.io/apimachinery/pkg/api/resource"
+	apiconversion "k8s.io/apimachinery/pkg/conversion"
 	convert "k8s.io/apimachinery/pkg/conversion"
 	infrav1alpha4 "sigs.k8s.io/cluster-api-provider-azure/api/v1alpha4"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
@@ -57,6 +58,15 @@ func (src *AzureMachinePool) ConvertTo(dstRaw conversion.Hub) error {
 		dst.Spec.Template.SpotVMOptions.EvictionPolicy = restored.Spec.Template.SpotVMOptions.EvictionPolicy
 	}
 
+	for i, r := range restored.Status.LongRunningOperationStates {
+		if r.Name == dst.Status.LongRunningOperationStates[i].Name {
+			dst.Status.LongRunningOperationStates[i].ServiceName = r.ServiceName
+		}
+	}
+
+	// Restore list of virtual network peerings
+	dst.Spec.OrchestrationMode = restored.Spec.OrchestrationMode
+
 	return nil
 }
 
@@ -68,7 +78,16 @@ func (dst *AzureMachinePool) ConvertFrom(srcRaw conversion.Hub) error {
 	}
 
 	// Preserve Hub data on down-conversion.
-	return utilconversion.MarshalData(src, dst)
+	if err := utilconversion.MarshalData(src, dst); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Convert_v1beta1_AzureMachinePoolSpec_To_v1alpha4_AzureMachinePoolSpec converts a v1beta1 AzureMachinePool.Spec to a v1alpha4 AzureMachinePool.Spec.
+func Convert_v1beta1_AzureMachinePoolSpec_To_v1alpha4_AzureMachinePoolSpec(in *infrav1exp.AzureMachinePoolSpec, out *AzureMachinePoolSpec, s apiconversion.Scope) error {
+	return autoConvert_v1beta1_AzureMachinePoolSpec_To_v1alpha4_AzureMachinePoolSpec(in, out, s)
 }
 
 // ConvertTo converts this AzureMachinePool to the Hub version (v1beta1).

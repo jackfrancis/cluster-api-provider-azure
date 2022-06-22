@@ -263,9 +263,8 @@ spec:
   location: ${AZURE_LOCATION}
   strategy:
     rollingUpdate:
-      deletePolicy: Oldest
-      maxSurge: 25%
-      maxUnavailable: 1
+      maxSurge: 0%
+      maxUnavailable: 0
     type: RollingUpdate
   template:
     image:
@@ -431,6 +430,11 @@ metadata:
   namespace: default
 spec:
   location: ${AZURE_LOCATION}
+  strategy:
+    rollingUpdate:
+      maxSurge: 0%
+      maxUnavailable: 0
+    type: RollingUpdate
   template:
     image:
       marketplace:
