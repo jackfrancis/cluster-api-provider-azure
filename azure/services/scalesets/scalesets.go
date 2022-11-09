@@ -20,7 +20,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2021-11-01/compute"
@@ -410,16 +409,16 @@ func (s *Service) buildVMSSFromSpec(ctx context.Context, vmssSpec azure.ScaleSet
 		return compute.VirtualMachineScaleSet{}, errors.Wrapf(err, "failed to get find SKU %s in compute api", vmssSpec.Size)
 	}
 
-	var faultDomainCount *int32
-	faultDomainCountStr, ok := sku.GetCapability(resourceskus.MaximumPlatformFaultDomainCount)
-	if !ok {
-		return compute.VirtualMachineScaleSet{}, errors.Errorf("unable to get required availability set SKU capability %s", resourceskus.MaximumPlatformFaultDomainCount)
-	}
-	count, err := strconv.ParseInt(faultDomainCountStr, 10, 32)
-	if err != nil {
-		return compute.VirtualMachineScaleSet{}, errors.Wrapf(err, "unable to parse availability set fault domain count")
-	}
-	faultDomainCount = to.Int32Ptr(int32(count))
+	// var faultDomainCount *int32
+	// faultDomainCountStr, ok := sku.GetCapability(resourceskus.MaximumPlatformFaultDomainCount)
+	// if !ok {
+	// 	return compute.VirtualMachineScaleSet{}, errors.Errorf("unable to get required availability set SKU capability %s", resourceskus.MaximumPlatformFaultDomainCount)
+	// }
+	// count, err := strconv.ParseInt(faultDomainCountStr, 10, 32)
+	// if err != nil {
+	// 	return compute.VirtualMachineScaleSet{}, errors.Wrapf(err, "unable to parse availability set fault domain count")
+	// }
+	// faultDomainCount = to.Int32Ptr(int32(count))
 
 	if vmssSpec.AcceleratedNetworking == nil {
 		// set accelerated networking to the capability of the VMSize
@@ -474,7 +473,7 @@ func (s *Service) buildVMSSFromSpec(ctx context.Context, vmssSpec azure.ScaleSet
 		Plan:  s.generateImagePlan(ctx),
 		VirtualMachineScaleSetProperties: &compute.VirtualMachineScaleSetProperties{
 			OrchestrationMode:        getOrchestrationMode(s.Scope.ScaleSetSpec().OrchestrationMode),
-			PlatformFaultDomainCount: faultDomainCount,
+			PlatformFaultDomainCount: to.Int32Ptr(1),
 			SinglePlacementGroup:     to.BoolPtr(false),
 			VirtualMachineProfile: &compute.VirtualMachineScaleSetVMProfile{
 				OsProfile:       osProfile,
