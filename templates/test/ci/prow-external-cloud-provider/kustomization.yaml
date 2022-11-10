@@ -2,14 +2,14 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: default
 resources:
-  - ../../../flavors/external-cloud-provider
+  - ../../../flavors/external-cloud-provider-machinepool
   - ../prow/cni-resource-set.yaml
 patchesStrategicMerge:
   - ../patches/tags.yaml
   - ../patches/controller-manager.yaml
   - ../patches/cluster-cni.yaml
   - ../patches/apiserver.yaml
-  - ../patches/uami-md-0.yaml
+  - ../patches/uami-mp-0.yaml
   - ../patches/uami-control-plane.yaml
 configMapGenerator:
   - name: cni-${CLUSTER_NAME}-calico

@@ -161,71 +161,73 @@ spec:
       vmSize: ${AZURE_CONTROL_PLANE_MACHINE_TYPE}
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
-kind: MachineDeployment
+kind: MachinePool
 metadata:
-  name: ${CLUSTER_NAME}-md-0
+  name: ${CLUSTER_NAME}-mp-0
   namespace: default
 spec:
   clusterName: ${CLUSTER_NAME}
   replicas: ${WORKER_MACHINE_COUNT}
-  selector:
-    matchLabels: null
   template:
     spec:
       bootstrap:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
-          kind: KubeadmConfigTemplate
-          name: ${CLUSTER_NAME}-md-0
+          kind: KubeadmConfig
+          name: ${CLUSTER_NAME}-mp-0
       clusterName: ${CLUSTER_NAME}
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-        kind: AzureMachineTemplate
-        name: ${CLUSTER_NAME}-md-0
+        kind: AzureMachinePool
+        name: ${CLUSTER_NAME}-mp-0
       version: ${KUBERNETES_VERSION}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-kind: AzureMachineTemplate
+kind: AzureMachinePool
 metadata:
-  name: ${CLUSTER_NAME}-md-0
+  name: ${CLUSTER_NAME}-mp-0
   namespace: default
 spec:
+  identity: UserAssigned
+  location: ${AZURE_LOCATION}
+  strategy:
+    rollingUpdate:
+      maxSurge: 0%
+      maxUnavailable: 0
+    type: RollingUpdate
   template:
-    spec:
-      identity: UserAssigned
-      osDisk:
-        diskSizeGB: 128
-        osType: Linux
-      sshPublicKey: ${AZURE_SSH_PUBLIC_KEY_B64:=""}
-      userAssignedIdentities:
-      - providerID: /subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${CI_RG:=capz-ci}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${USER_IDENTITY:=cloud-provider-user-identity}
-      vmSize: ${AZURE_NODE_MACHINE_TYPE}
+    osDisk:
+      diskSizeGB: 30
+      managedDisk:
+        storageAccountType: Premium_LRS
+      osType: Linux
+    sshPublicKey: ${AZURE_SSH_PUBLIC_KEY_B64:=""}
+    vmSize: ${AZURE_NODE_MACHINE_TYPE}
+  userAssignedIdentities:
+  - providerID: /subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${CI_RG:=capz-ci}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/${USER_IDENTITY:=cloud-provider-user-identity}
 ---
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
-kind: KubeadmConfigTemplate
+kind: KubeadmConfig
 metadata:
-  name: ${CLUSTER_NAME}-md-0
+  name: ${CLUSTER_NAME}-mp-0
   namespace: default
 spec:
-  template:
-    spec:
-      files:
-      - contentFrom:
-          secret:
-            key: worker-node-azure.json
-            name: ${CLUSTER_NAME}-md-0-azure-json
-        owner: root:root
-        path: /etc/kubernetes/azure.json
-        permissions: "0644"
-      joinConfiguration:
-        nodeRegistration:
-          kubeletExtraArgs:
-            azure-container-registry-config: /etc/kubernetes/azure.json
-            cloud-config: /etc/kubernetes/azure.json
-            cloud-provider: external
-            feature-gates: CSIMigrationAzureDisk=true
-          name: '{{ ds.meta_data["local_hostname"] }}'
-      preKubeadmCommands: []
+  files:
+  - contentFrom:
+      secret:
+        key: worker-node-azure.json
+        name: ${CLUSTER_NAME}-mp-0-azure-json
+    owner: root:root
+    path: /etc/kubernetes/azure.json
+    permissions: "0644"
+  joinConfiguration:
+    nodeRegistration:
+      kubeletExtraArgs:
+        azure-container-registry-config: /etc/kubernetes/azure.json
+        cloud-config: /etc/kubernetes/azure.json
+        cloud-provider: external
+        feature-gates: CSIMigrationAzureDisk=true
+      name: '{{ ds.meta_data["local_hostname"] }}'
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: AzureClusterIdentity
