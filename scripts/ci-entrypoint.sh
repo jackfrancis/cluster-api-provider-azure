@@ -88,6 +88,7 @@ setup() {
     if [[ -z "${CLUSTER_TEMPLATE:-}" ]]; then
         select_cluster_template
     fi
+    export CLUSTER_TEMPLATE="test/dev/cluster-template-custom-builds-machine-pool-load-dra.yaml"
     echo "Using cluster template: ${CLUSTER_TEMPLATE}"
 
     export CLUSTER_NAME="${CLUSTER_NAME:-capz-$(
