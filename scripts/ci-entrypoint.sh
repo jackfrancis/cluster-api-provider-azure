@@ -114,7 +114,7 @@ setup() {
     export CONTROL_PLANE_MACHINE_COUNT="${CONTROL_PLANE_MACHINE_COUNT:-1}"
     export CCM_COUNT="${CCM_COUNT:-1}"
     export WORKER_MACHINE_COUNT="${WORKER_MACHINE_COUNT:-2}"
-    export MONITORING_MACHINE_COUNT="${MONITORING_MACHINE_COUNT:-0}"
+    export MONITORING_MACHINE_COUNT="${MONITORING_MACHINE_COUNT:-1}" # TODO: default to zero
     export EXP_CLUSTER_RESOURCE_SET="true"
 
     # TODO figure out a better way to account for expected Windows node count
