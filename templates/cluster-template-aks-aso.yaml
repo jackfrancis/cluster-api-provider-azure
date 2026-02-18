@@ -27,6 +27,7 @@ spec:
         serviceoperator.azure.com/credential-from: ${ASO_CREDENTIAL_SECRET_NAME}
       name: ${CLUSTER_NAME}
     spec:
+      diskEncryptionSetReference: /​subscriptions/​{subscriptionId}/​resourceGroups/​{resourceGroupName}/​providers/​Microsoft.Compute/​diskEncryptionSets/​{encryptionSetName}
       dnsPrefix: ${CLUSTER_NAME}
       identity:
         type: SystemAssigned
